@@ -1,0 +1,45 @@
+service: websocket-quick-start
+
+package:
+  exclude:
+    - README.md
+
+custom:
+  stage: ${self:provider.stage}
+
+provider:
+  name: aws
+  runtime: nodejs10.x
+  stackName: ${self:service}-${opt:stage}
+  websocketsApiName: ${self:service}-${opt:stage}
+  stage: ${env:AWS_STAGE, '${opt:stage, 'dev'}'}
+  region: ${env:AWS_DEFAULT_REGION, '${opt:region, 'eu-west-1'}'}
+
+  # Keyword to call a function e.g {"action": "ping"}
+  # You can overwrite the route expression e.g $request.body.route - {"route": "ping"}
+  websocketsApiRouteSelectionExpression: $request.body.action
+
+functions:
+  default:
+    handler: src/handler/default.handler
+    events:
+      - websocket: $default
+  ping_pong:
+    handler: src/handler/ping-pong.handler
+    events:
+      - websocket:
+          route: ping
+
+  # You can use a $default route that will forward all WebSocket events
+  # (including $connect and $disconnect) to your default function or add more routes
+  #
+  #  connect:
+  #    handler: handler.connect
+  #    events:
+  #      - websocket:
+  #          route: $connect
+  #    disconnect:
+  #      handler: handler.disconnect
+  #      events:
+  #        - websocket:
+  #            route: $disconnect
